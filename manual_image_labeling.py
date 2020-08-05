@@ -8,12 +8,60 @@ from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import ttk
 from tkinter import font
-from PIL import ImageTk, Image
 import pickle
 import time
 from copy import deepcopy
 
 
+try:
+    from PIL import ImageTk, Image
+except ImportError:
+    raise RuntimeError("PIL is not installed, if you are using anaconda you can just install the pillow package. ")
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# function for remind of saving when closing main window
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def closing():
+    msg_box = messagebox.askquestion("Exit application", "Are you sure you want to exit? Unsaved progress will be lost. ", icon="warning")
+    if msg_box == "yes":
+        root.destroy()
+    else:
+        messagebox.showinfo("Return", "You will now return to the application. ")
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# setting all the variables
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# uncomment if just every dir in the executing folder and comment the lane after
+# image_folders = [i for i in Path.cwd().glob("*") if i.is_dir()]
+image_folders = [Path("C:/Users/Kilian-Desktop/Desktop/Gui_Test/1"), Path("C:/Users/Kilian-Desktop/Desktop/Gui_Test/2")]
+for i in image_folders:
+    if not i.exists():
+        raise RuntimeError("The folder " + str(i) + " does not exist. ")
+
+# uncomment if a folder named "results" should be created in executing folder and comment the lane after
+# result_folder = Path(Path.cwd() / "results").mkdir(parents=False, exist_ok=False)
+result_folder = Path("C:/Users/Kilian-Desktop/Desktop/Gui_Test")
+if not result_folder.exists():
+    raise RuntimeError("Result folder does not exist. ")
+
+# add any label as string and/or remove existing
+labels = ["good", "bad"]
+
+# set resize to False to display original image
+# set resize to True to resize image keeping same aspect ratio
+resize = True
+
+# creating the tk object
+root = tk.Tk(className=" Manual labeling tool by Kilian Schnelle")
+# uncomment and replace sizes if the window should have a minimum size
+# root.minsize(800, 800)
+
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# class for the actual GUI
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 class GUI:
     def __init__(self, master, labels, image_folders, result_folder, resize):
         self.master = master
@@ -108,12 +156,37 @@ class GUI:
         self.frames.append(self.voting_toolbar)
         for i in range(self.n_labels):
             tk.Button(self.voting_toolbar, text=self.labels[i], font=self.heading_style, command=lambda i2=self.labels[i]: self.callback_vote_butt(i2)).grid(row=0, column=i)
+            self.master.bind(str(i+1), lambda event, p=i: self.callback_vote_butt(self.labels[p]))
+
+        self.image_toolbar = tk.Frame(self.main_frame, bd=1, relief='raised')
+        self.image_toolbar.grid(row=4, column=0, columnspan=2)
+        self.frames.append(self.image_toolbar)
+        tk.Button(self.image_toolbar, text='previous', command=lambda: self.next_image("minus")).grid(row=0, column=0)
+        tk.Button(self.image_toolbar, text='next', command=lambda: self.next_image("plus")).grid(row=0, column=1)
+        self.master.bind('<Left>', lambda x: self.next_image("minus"))
+        self.master.bind('<Right>', lambda x: self.next_image("plus"))
 
         # test result button
-        tk.Button(self.main_frame, text='Print result', command=self.print_result).grid(row=4, column=0)
+        tk.Button(self.main_frame, text='Print result', command=self.print_result).grid(row=5, column=0)
 
+    def load_frames(self):
         for i in self.frames:
             i.tkraise()
+
+    def next_image(self, direction):
+        select_index = self.file_listbox.curselection()
+        next = 0
+        if len(select_index) > 0:
+            last = int(select_index[-1])
+            self.file_listbox.selection_clear(select_index)
+            if last < self.file_listbox.size() - 1:
+                if direction == "plus":
+                    next = last + 1
+                elif last > 0 and direction == "minus":
+                    next = last - 1
+        self.file_listbox.activate(next)
+        self.file_listbox.selection_set(next)
+        self.callback_img('<<ListboxSelect>>')
 
     def print_result(self):
         print(self.result_dict)
@@ -166,6 +239,7 @@ class GUI:
                     pickle.dump(obj=deepcopy(self.result_dict), file=out)
                 self.current_user.set(self.user)
                 messagebox.showinfo("User created", "The user " + self.user + " was created. You will now return to the application. ")
+                self.load_frames()
         else:
             msg_box = messagebox.askquestion("A user already loaded", "The user " + self.user + " is already loaded. Do you want to make a new user?")
             if msg_box == "yes":
@@ -251,31 +325,10 @@ class GUI:
         return True
 
 
-# main start
-def closing():
-    msg_box = messagebox.askquestion("Exit application", "Are you sure you want to exit? Unsaved progress will be lost. ", icon="warning")
-    if msg_box == "yes":
-        root.destroy()
-    else:
-        messagebox.showinfo("Return", "You will now return to the application. ")
-
-image_folders = [Path("C:/Desktop/Gui_Test/1"), Path("C:/Desktop/Gui_Test/2")]
-for i in image_folders:
-    if not i.exists():
-        raise RuntimeError("The folder " + str(i) + " does not exist. ")
-
-result_folder = Path("C:/Desktop/Gui_Test")
-if not result_folder.exists():
-    raise RuntimeError("Result folder does not exist. ")
-
-labels = ["good", "bad", "idontknow"]
-# set resize to False to display original image
-# set resize to True to resize image keeping same aspect ratio
-resize = True
-
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# starting the GUI
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # start gui
-root = tk.Tk(className=" Manual labeling tool by Kilian Schnelle")
-#root.minsize(800, 800)
 app = GUI(root, labels, image_folders, result_folder,resize)
 root.protocol("WM_DELETE_WINDOW", closing)
 root.mainloop()
