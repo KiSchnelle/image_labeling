@@ -188,6 +188,10 @@ class GUI:
             returnlist.append(wertready)
         return returnlist
 
+    @staticmethod
+    def swap_frame(frame):
+        frame.tkraise()
+
     def load_frames(self):
         for i in self.frames:
             i.tkraise()
