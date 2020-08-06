@@ -169,6 +169,25 @@ class GUI:
         # test result button
         tk.Button(self.main_frame, text='Print result', command=self.print_result).grid(row=5, column=0)
 
+    @staticmethod
+    def star_file_format(iterableobject):
+        returnlist = []
+        for x in iterableobject:
+            try:
+                wert = int(x)
+                wertready = "{:12d}".format(wert)
+            except ValueError:
+                try:
+                    wert = float(x)
+                    if wert >= 0:
+                        wertready = "{:12.6f}".format(wert)
+                    else:
+                        wertready = "{:12.5f}".format(wert)
+                except ValueError:
+                    wertready = str(x)
+            returnlist.append(wertready)
+        return returnlist
+
     def load_frames(self):
         for i in self.frames:
             i.tkraise()
@@ -260,6 +279,14 @@ class GUI:
         else:
             with (self.result_folder / "{}.pickle".format(self.user)).open("wb") as out:
                 pickle.dump(obj=deepcopy(self.result_dict), file=out)
+            # with (self.result_folder / "{}.star".format(self.user)).open("w") as out:
+                # out.write("\ndata_\n\nloop_\n_kiImageFolder #1\n_kiImage #2\n_kiLabel #3\n")
+                # or u, o in self.result_dict.items():
+                    # for p, q in o.items():
+                        # line_list = [str(u), str(p), str(q)]
+                        # line_list_ready = self.star_file_format(line_list)
+                        # line = " ".join(line_list_ready)
+                        # out.write(line + "\n")
             if exit is True:
                 messagebox.showinfo("Saved", "Progress for the user " + self.user + " was saved. The application will now quit. ")
                 self.master.destroy()
