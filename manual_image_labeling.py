@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # !! conda environment needs pillow to be installed to use PIL !!
+# !! conda environment needs bcrypt to be installed !!
 
 import tkinter as tk
 from pathlib import Path
@@ -11,8 +12,12 @@ from tkinter import font
 import pickle
 import time
 from copy import deepcopy
+from getpass import getpass
 
-
+try:
+    import bcrypt
+except ImportError:
+    raise RuntimeError("bcrypt package is not installed. ")
 try:
     from PIL import ImageTk, Image
 except ImportError:
@@ -53,10 +58,7 @@ labels = ["good", "bad"]
 # set resize to True to resize image keeping same aspect ratio
 resize = True
 
-# creating the tk object
-root = tk.Tk(className=" Manual labeling tool by Kilian Schnelle")
-# uncomment and replace sizes if the window should have a minimum size
-# root.minsize(800, 800)
+
 
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -360,6 +362,13 @@ class GUI:
 # starting the GUI
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # start gui
+# creating the tk object
+root = tk.Tk(className=" Manual labeling tool by Kilian Schnelle")
+# uncomment and replace sizes if the window should have a minimum size
+# root.minsize(800, 800)
+
 app = GUI(root, labels, image_folders, result_folder,resize)
 root.protocol("WM_DELETE_WINDOW", closing)
 root.mainloop()
+
+
